@@ -21,3 +21,14 @@ logs
 
 # Data folder
 bookcorpus_data/
+
+# dataset
+dataset/index-cache/
+dataset/**/*.bin
+dataset/**/*.idx
+dataset/**/*.json
+dataset/**/*.jsonl
+dataset/**/*.txt
+
+# output
+output/
