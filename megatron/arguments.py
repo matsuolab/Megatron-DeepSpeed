@@ -738,6 +738,18 @@ def _add_logging_args(parser):
                        action='store_true',
                        help='Enable world size logging to tensorboard.')
 
+    # W&B options.
+    group.add_argument('--use-wandb', '--use_wandb', action='store_true',
+                       help='Use W&B logging.')
+    group.add_argument('--wandb-entity', '--wandb_entity', type=str, default=None,
+                       help='W&B entity name.')
+    group.add_argument('--wandb-project', '--wandb_project', type=str, default=None,
+                       help='W&B project name.')
+    group.add_argument('--wandb-group', '--wandb_group', type=str, default=None,
+                       help='W&B group name.')
+    group.add_argument('--wandb-tag', '--wandb_tag', type=str, default=None,
+                       help='W&B tag name.')
+
     return parser
 
 

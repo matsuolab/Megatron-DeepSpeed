@@ -158,6 +158,14 @@ def pretrain(train_valid_test_dataset_provider,
         if "compression_training" in args.deepspeed_config_dict:
             args.compression_training = True
 
+    # Initialize W&B for each node.
+    is_local_rank_0 = (torch.distributed.get_rank() % get_accelerator().device_count() == 0) if torch.distributed.is_initialized() else True
+    if wandb is not None and args.use_wandb and is_local_rank_0:
+        import socket
+        wandb.init(entity=args.wandb_entity, project=args.wandb_project,
+                   group=args.wandb_group, name=socket.gethostname(),
+                   tags=[args.wandb_tag] if args.wandb_tag else None)
+
     # Model, optimizer, and learning rate.
     timers('model-and-optimizer-setup', log_level=0).start(barrier=True)
     model, optimizer, opt_param_scheduler = setup_model_and_optimizer(
@@ -1086,7 +1094,7 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
                 ),
                 'training/iteration_time_vs_samples': (
                     (elapsed_time_per_iteration
-                        / args.consumed_train_samples),
+                        / args.consumed_train_samples)
                 ),
                 'training/consumed_samples': args.consumed_train_samples,
                 'training/consumed_tokens': args.consumed_train_tokens,
@@ -1100,7 +1108,7 @@ def training_log(loss_dict, total_loss_dict, learning_rate, iteration,
                     log_string += ' {}: {:.6E} |'.format(key, avg)
                 total_loss_dict[key] = get_accelerator().FloatTensor([0.0])
         if wandb is not None and getattr(wandb, 'run', None) is not None:
-            wandb.log(wandb_metrics)
+            wandb.log(wandb_metrics, step=iteration)
         if loss_scale is not None:
             log_string += ' loss scale: {:.1f} |'.format(loss_scale)
         if grad_norm is not None:
