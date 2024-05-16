@@ -176,10 +176,20 @@ def validate_args(args, defaults={}):
 
     # Parameters dtype.
     args.params_dtype = torch.float
+    if args.tf32:
+        assert not args.fp16
+        assert not args.bf16
+        args.params_dtype = torch.float
+        # https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-and-later-devices
+        print("Setting TF32 in CUDA backends.")
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
     if args.fp16:
+        assert not args.tf32
         assert not args.bf16
         args.params_dtype = torch.half
     if args.bf16:
+        assert not args.tf32
         assert not args.fp16
         args.params_dtype = torch.bfloat16
         # bfloat16 requires gradient accumulation and all-reduce to
@@ -1080,6 +1090,8 @@ def _add_checkpointing_args(parser):
 def _add_mixed_precision_args(parser):
     group = parser.add_argument_group(title='mixed precision')
 
+    group.add_argument('--tf32', action='store_true',
+                       help='Run model in tf32 mode.')
     group.add_argument('--fp16', action='store_true',
                        help='Run model in fp16 mode.')
     group.add_argument('--bf16', action='store_true',
