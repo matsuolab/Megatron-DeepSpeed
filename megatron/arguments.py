@@ -60,6 +60,16 @@ def parse_args(extra_args_provider=None, ignore_unknown_args=False):
     # helper argument to set deepspeed pipeline parallel or not
     args.ds_pipeline_enabled = not args.no_pipeline_parallel
 
+    # MPI options.
+    # https://github.com/okoge-kaz/megatron-deepspeed-turing-techblog/commit/4880fb759971c9e0fd65095005d85f5e9dda35b1#diff-5f7d1ddfb0666cb6bb4ec0f07fd2fd7b1cd0354f421df5560489091db2ff5a55
+    if args.use_mpi:
+        global_rank = int(os.getenv('OMPI_COMM_WORLD_RANK', 0))
+        local_rank = int(os.getenv('OMPI_COMM_WORLD_LOCAL_RANK', 0))
+        world_size = int(os.getenv('OMPI_COMM_WORLD_SIZE', 1))
+        os.environ['RANK'] = str(global_rank)
+        os.environ['LOCAL_RANK'] = str(local_rank)
+        os.environ['WORLD_SIZE'] = str(world_size)
+
     # Args from environment
     args.rank = int(os.getenv('RANK', '0'))
     args.world_size = int(os.getenv("WORLD_SIZE", '1'))
@@ -1194,6 +1204,11 @@ def _add_distributed_args(parser):
                        'affects the encoder embedding.)')
     group.add_argument('--use-distributed-optimizer', action='store_true',
                        help='Use distributed optimizer.')
+
+    # MPI options.
+    # https://github.com/okoge-kaz/megatron-deepspeed-turing-techblog/commit/4880fb759971c9e0fd65095005d85f5e9dda35b1#diff-5f7d1ddfb0666cb6bb4ec0f07fd2fd7b1cd0354f421df5560489091db2ff5a55
+    group.add_argument('--use-mpi', '--use_mpi', action='store_true', default=False,
+                       help='Use MPI for distributed training.')
 
     return parser
 
